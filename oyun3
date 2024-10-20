@@ -1,0 +1,174 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matematik İşlem Oyunu</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #game {
+            text-align: center;
+        }
+        #message {
+            font-size: 24px;
+            margin: 20px 0;
+            color: green;
+        }
+        #input-box {
+            font-size: 18px;
+            padding: 10px;
+        }
+        #submit-btn {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #submit-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game">
+    <h1>Matematik İşlem Oyunu</h1>
+    <p id="instructions">Toplama işlemini çöz ve "Cevapla" butonuna bas!</p>
+    <div id="problem"></div>
+    <input type="number" id="input-box" placeholder="Sonucun?" min="0">
+    <button id="submit-btn">Cevapla</button>
+    <p id="message"></p>
+    <p id="score"></p>
+</div>
+
+<script>
+    let basamak = 1; 
+    let dogruTahminSayisi = 0;
+    let yanlisTahminSayisi = 0;
+    let gerekliDogruTahmin = 3;
+    let soruSayisi = 1; 
+    let toplamDogru = 0;
+    let toplamYanlis = 0;
+
+    // İlk problem üretimi
+    let problem = generateProblem(basamak, soruSayisi);
+
+    document.getElementById('submit-btn').addEventListener('click', tahminEt);
+    document.getElementById('input-box').addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            tahminEt();
+        }
+    });
+
+    function tahminEt() {
+        const tahmin = parseInt(document.getElementById('input-box').value);
+        if (isNaN(tahmin)) {
+            document.getElementById('message').textContent = "Lütfen bir sonuç girin!";
+            return;
+        }
+
+        if (tahmin === problem.sonuc) {
+            dogruTahminSayisi++;
+            toplamDogru++;
+            document.getElementById('message').textContent = "Doğru!";
+
+            if (dogruTahminSayisi === gerekliDogruTahmin) {
+                basamak++;
+                soruSayisi = 1; 
+                if (basamak > 6) {
+                    oyunSonu();
+                    return;
+                }
+                dogruTahminSayisi = 0;
+                yanlisTahminSayisi = 0; 
+                gerekliDogruTahmin = getGerekliDogruTahmin(basamak);
+                document.getElementById('instructions').textContent = basamak + ". basamağa geçtin!";
+            } else {
+                soruSayisi++;
+            }
+
+            resetLevel();
+        } else {
+            yanlisTahminSayisi++;
+            toplamYanlis++;
+            document.getElementById('message').textContent = "Yanlış! Tekrar dene.";
+
+            // 2 yanlış cevap durumunda başa dön
+            if (yanlisTahminSayisi === 2) {
+                basamak = 1;
+                dogruTahminSayisi = 0;
+                yanlisTahminSayisi = 0;
+                gerekliDogruTahmin = getGerekliDogruTahmin(basamak);
+                problem = generateProblem(basamak, 1); // 1. basamakta yeni problem oluştur
+                document.getElementById('instructions').textContent = "1. basamağa döndün!";
+            }
+        }
+        updateScore();
+    }
+
+    function generateProblem(basamak, soruSayisi) {
+        let sayiAdedi = getKombinasyonSayisi(basamak, soruSayisi);
+        let toplam = 0;
+        let problemMetni = "";
+        for (let i = 0; i < sayiAdedi; i++) {
+            let sayi = Math.floor(Math.random() * (Math.pow(10, basamak) - Math.pow(10, basamak - 1))) + Math.pow(10, basamak - 1);
+            toplam += sayi;
+            problemMetni += sayi;
+            if (i < sayiAdedi - 1) {
+                problemMetni += " + ";
+            }
+        }
+        document.getElementById('problem').textContent = problemMetni;
+        return { sonuc: toplam, problemMetni: problemMetni };
+    }
+
+    function getKombinasyonSayisi(basamak, soruSayisi) {
+        if (soruSayisi <= 2) {
+            return 2;
+        }
+        return soruSayisi; 
+    }
+
+    function getGerekliDogruTahmin(basamak) {
+        switch (basamak) {
+            case 1: return 3;
+            case 2: return 5;
+            case 3: return 7;
+            case 4: return 9;
+            case 5: return 11;
+            case 6: return 13;
+        }
+    }
+
+    function resetLevel() {
+        problem = generateProblem(basamak, soruSayisi);
+        document.getElementById('input-box').value = '';
+    }
+
+    function updateScore() {
+        document.getElementById('score').textContent = "Toplam doğru: " + toplamDogru + ", Toplam yanlış: " + toplamYanlis;
+    }
+
+    function oyunSonu() {
+        document.getElementById('game').innerHTML = `
+            <h1>Oyunu kazandın!</h1>
+            <p>Toplam doğru cevap: ${toplamDogru}</p>
+            <p>Toplam yanlış cevap: ${toplamYanlis}</p>
+        `;
+    }
+</script>
+
+</body>
+</html>
